@@ -1,5 +1,5 @@
 package core
 
-type Point struct {
-	X, Y float32
-}
+//type Point struct {
+//	X, Y float32
+//}
