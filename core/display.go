@@ -1,19 +1,20 @@
 package core
 
 import (
-	"fmt"
 	eb "github.com/hajimehoshi/ebiten"
 	ebutil "github.com/hajimehoshi/ebiten/ebitenutil"
 	_ "image/png"
+	"math/rand"
+	"time"
 )
 
 var screenWidth = 800
 var screenHeight = 600
 
-const M = 20
+const M = 16
 const N = 10
 
-type Board [M][N]int
+var Board [M][N]int
 
 type Point struct {
 	X, Y int
@@ -39,15 +40,36 @@ var colors = [7]string{"I", "J", "L", "S", "Z", "O", "T"}
 /// TODO: game timing. Ticker delay and timer !!
 ///
 
+var last = time.Now()
+
+var timer = 0.0
+var delay = 0.7
+
+func check() bool {
+	for i := 0; i < 4; i++ {
+		if a[i].X < 0 || a[i].X >= N || a[i].Y >= M {
+			return false
+		} else if Board[a[i].Y][a[i].X] != 0 {
+			return false
+		}
+	}
+
+	return true
+}
 func Update(screen *eb.Image) error {
+
+	// Perform time processing events
+	dt := time.Since(last).Seconds()
+	last = time.Now()
+	timer += dt
 
 	rotate := false
 	dx := 0
 	colorNum := 3
-	//timer := 0.0
-	//delay := 0.3
 
 	ebImg, _, _ := ebutil.NewImageFromFile("assets/image/"+colors[colorNum]+".png", eb.FilterDefault)
+	backGr, _, _ := ebutil.NewImageFromFile("assets/image/tetris_backgraund.png", eb.FilterDefault)
+	//fmt.Println(err)
 
 	if eb.IsKeyPressed(eb.KeyUp) == true {
 		rotate = true
@@ -60,12 +82,18 @@ func Update(screen *eb.Image) error {
 	/// <- Move -> ///
 
 	for i := 0; i < 4; i++ {
+		b[i] = a[i]
 		a[i].X += dx
+	}
+	if !check() {
+		for i := 0; i < 4; i++ {
+			a[i] = b[i]
+		}
 	}
 
 	/// Rotate ///
 
-fmt.Println(rotate)
+	//fmt.Println(rotate)
 	if rotate {
 		centerOfRot := a[1] // center of rotation
 
@@ -76,31 +104,63 @@ fmt.Println(rotate)
 			a[i].Y = centerOfRot.Y + y
 		}
 
+		if !check() {
+			for i := 0; i < 4; i++ {
+				a[i] = b[i]
+			}
+		}
+
 	}
 
-//	time.Sleep(time.Second / 5)
+	/// Tick ///
 
-	n := 3
-	if a[0].X == 0 {
+	if timer > delay {
+		for i := 0; i < 4; i++ {
+			b[i] = a[i]
+			a[i].Y += 1
+		}
 
-	for i := 0; i < 4; i++ {
-		a[i].X = figures[n][i] % 2
-		a[i].Y = figures[n][i] / 2
+		if !check() {
+			for i := 0; i < 4; i++ {
+				Board[b[i].Y][b[i].X] = colorNum
+
+				colorNum = 1 + rand.Int()%7
+				n := rand.Int() % 7
+				for i := 0; i < 4; i++ {
+					a[i].X = figures[n][i] % 2
+					a[i].Y = figures[n][i] / 2
+				}
+			}
+
+		}
+
+		timer = 0
 	}
-	}
 
-	//for i := 0; i < 4; i++ {
-	//	fmt.Println(a[i].X, " ", a[i].Y)
-	//}
+
+	/// draw ///
+
 	screen.Clear()
+	screen.DrawImage(backGr, &eb.DrawImageOptions{})
 
-	imageOptions := eb.DrawImageOptions{}
+
+	for i := 0; i < M; i++ {
+		for j := 0; j < N; j++ {
+			if Board[i][j] == 0 {
+				continue
+			}
+			geo1 := eb.GeoM{}
+			geo1.Translate(float64(j*25+300), float64(i*25+120))
+			screen.DrawImage(ebImg, &eb.DrawImageOptions{GeoM:geo1})
+		}
+	}
+
+
 	for i := 0; i < 4; i++ {
-		geo := eb.GeoM{}
+		geo1 := eb.GeoM{}
 		//geo.Scale(0.2, 0.2)
-		geo.Translate(float64(a[i].X*32), float64(a[i].Y*32))
-		imageOptions = eb.DrawImageOptions{GeoM: geo}
-		screen.DrawImage(ebImg, &imageOptions)
+		geo1.Translate(float64(a[i].X*25+300), float64(a[i].Y*25+120))
+		screen.DrawImage(ebImg, &eb.DrawImageOptions{GeoM: geo1})
 	}
 
 	rotate = false

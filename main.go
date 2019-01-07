@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/hajimehoshi/ebiten"
 	"github.com/bdkamenov/tetris_multiplayer/core"
+	"github.com/hajimehoshi/ebiten"
 )
 
 func main() {
