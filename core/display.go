@@ -11,51 +11,30 @@ import (
 var screenWidth = 800
 var screenHeight = 600
 
-const M = 16
-const N = 10
-
-var Board [M][N]int
-
-type Point struct {
-	X, Y int
-}
-
-var a, b [4]Point
-
-// every figure can be described in
-// 2x4 matrix and every matrix elements(figure)
-// can be described using the idecies of matrices
-var figures = [7][4]int{
-	{1, 3, 5, 7}, // I
-	{2, 4, 5, 7}, // Z
-	{3, 5, 4, 6}, // S
-	{3, 5, 4, 7}, // T
-	{2, 3, 5, 7}, // L
-	{3, 5, 7, 6}, // J
-	{2, 3, 4, 5}} // O
-
-var colors = [7]string{"I", "J", "L", "S", "Z", "O", "T"}
-
-///
-/// TODO: game timing. Ticker delay and timer !!
-///
+const del = 0.8
 
 var last = time.Now()
 
 var timer = 0.0
-var delay = 0.7
+var delay = del
+var firstRun = true
 
-func check() bool {
+//var colorNum = rand.Int() % 7
+var colorNum = 0
+
+
+func inBoardCheck() bool {
 	for i := 0; i < 4; i++ {
-		if a[i].X < 0 || a[i].X >= N || a[i].Y >= M {
+		if ShapeA[i].X < 0 || ShapeA[i].X >= BoardCols || ShapeA[i].Y >= BoardRows {
 			return false
-		} else if Board[a[i].Y][a[i].X] != 0 {
+		} else if Board[ShapeA[i].Y][ShapeA[i].X] != 0 {
 			return false
 		}
 	}
 
 	return true
 }
+
 func Update(screen *eb.Image) error {
 
 	// Perform time processing events
@@ -65,9 +44,7 @@ func Update(screen *eb.Image) error {
 
 	rotate := false
 	dx := 0
-	colorNum := 3
 
-	ebImg, _, _ := ebutil.NewImageFromFile("assets/image/"+colors[colorNum]+".png", eb.FilterDefault)
 	backGr, _, _ := ebutil.NewImageFromFile("assets/image/tetris_backgraund.png", eb.FilterDefault)
 	//fmt.Println(err)
 
@@ -77,37 +54,44 @@ func Update(screen *eb.Image) error {
 		dx = -1
 	} else if eb.IsKeyPressed(eb.KeyRight) {
 		dx = 1
+	} else if eb.IsKeyPressed(eb.KeyDown) {
+		delay = 0.05
+	}
+
+	if firstRun {
+		colorNum = rand.Int()%7 + 1
+
+		for i := 0; i < 4; i++ {
+			ShapeA[i].X = figures[colorNum][i] % 2
+			ShapeA[i].Y = figures[colorNum][i] / 2
+		}
+
+		firstRun = false
 	}
 
 	/// <- Move -> ///
 
+	copy(BufferB[:], ShapeA[:]) // save the positions before inBoardCheck
 	for i := 0; i < 4; i++ {
-		b[i] = a[i]
-		a[i].X += dx
+		ShapeA[i].X += dx
 	}
-	if !check() {
-		for i := 0; i < 4; i++ {
-			a[i] = b[i]
-		}
+	if !inBoardCheck() { // if the the position is not in the board go back
+		copy(ShapeA[:], BufferB[:])
 	}
 
 	/// Rotate ///
-
-	//fmt.Println(rotate)
 	if rotate {
-		centerOfRot := a[1] // center of rotation
+		centerOfRot := ShapeA[1] // center of rotation
 
 		for i := 0; i < 4; i++ {
-			x := a[i].Y - centerOfRot.Y
-			y := a[i].X - centerOfRot.X
-			a[i].X = centerOfRot.X - x
-			a[i].Y = centerOfRot.Y + y
+			x := ShapeA[i].Y - centerOfRot.Y
+			y := ShapeA[i].X - centerOfRot.X
+			ShapeA[i].X = centerOfRot.X - x
+			ShapeA[i].Y = centerOfRot.Y + y
 		}
 
-		if !check() {
-			for i := 0; i < 4; i++ {
-				a[i] = b[i]
-			}
+		if !inBoardCheck() { // if there is no where to go we dont move the figure again
+			copy(ShapeA[:], BufferB[:])
 		}
 
 	}
@@ -115,57 +99,74 @@ func Update(screen *eb.Image) error {
 	/// Tick ///
 
 	if timer > delay {
+		copy(BufferB[:], ShapeA[:]) // save the positions before inBoardCheck
 		for i := 0; i < 4; i++ {
-			b[i] = a[i]
-			a[i].Y += 1
+			ShapeA[i].Y += 1
 		}
 
-		if !check() {
+		if !inBoardCheck() {
 			for i := 0; i < 4; i++ {
-				Board[b[i].Y][b[i].X] = colorNum
-
-				colorNum = 1 + rand.Int()%7
-				n := rand.Int() % 7
-				for i := 0; i < 4; i++ {
-					a[i].X = figures[n][i] % 2
-					a[i].Y = figures[n][i] / 2
-				}
+				Board[BufferB[i].Y][BufferB[i].X] = colorNum
 			}
 
+			colorNum = rand.Int()%7 + 1
+			for i := 0; i < 4; i++ {
+				ShapeA[i].X = figures[colorNum][i] % 2
+				ShapeA[i].Y = figures[colorNum][i] / 2
+			}
 		}
 
 		timer = 0
 	}
 
+	/// inBoardCheck lines ///
+
+	k := BoardRows - 1
+	for i := BoardRows - 1; i > 0; i-- {
+		cnt := 0
+		for j := 0; j < BoardCols; j++ {
+			if Board[i][j] != 0 {
+				cnt++
+			}
+
+			Board[k][j] = Board[i][j]
+		}
+
+		if cnt < BoardCols {
+			k--
+		}
+	}
+
+	rotate = false
+	dx = 0
+	delay = del
 
 	/// draw ///
 
 	screen.Clear()
 	screen.DrawImage(backGr, &eb.DrawImageOptions{})
 
-
-	for i := 0; i < M; i++ {
-		for j := 0; j < N; j++ {
+	for i := 0; i < BoardRows; i++ {
+		for j := 0; j < BoardCols; j++ {
 			if Board[i][j] == 0 {
 				continue
 			}
+			ebImg, _, _ := ebutil.NewImageFromFile("assets/image/"+colors[Board[i][j] - 1]+".png", eb.FilterDefault)
 			geo1 := eb.GeoM{}
-			geo1.Translate(float64(j*25+300), float64(i*25+120))
-			screen.DrawImage(ebImg, &eb.DrawImageOptions{GeoM:geo1})
+			geo1.Translate(float64(j*25+299), float64(i*25+95))
+			screen.DrawImage(ebImg, &eb.DrawImageOptions{GeoM: geo1})
 		}
 	}
 
+    println(colorNum)
+	println(colors[colorNum - 1])
 
 	for i := 0; i < 4; i++ {
+		ebImg, _, _ := ebutil.NewImageFromFile("assets/image/"+colors[colorNum - 1]+".png", eb.FilterDefault)
 		geo1 := eb.GeoM{}
-		//geo.Scale(0.2, 0.2)
-		geo1.Translate(float64(a[i].X*25+300), float64(a[i].Y*25+120))
+		geo1.Translate(float64(ShapeA[i].X*25+299), float64(ShapeA[i].Y*25+95))
 		screen.DrawImage(ebImg, &eb.DrawImageOptions{GeoM: geo1})
 	}
-
-	rotate = false
-	dx = 0
-	//ebutil.DebugPrint(screen, "Our first game in Ebiten!")
 
 	return nil
 }

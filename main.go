@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/bdkamenov/tetris_multiplayer/core"
 	"github.com/hajimehoshi/ebiten"
+	"math/rand"
+	"time"
 )
 
 func main() {
@@ -15,6 +17,7 @@ func main() {
 	//
 	//fmt.Println("Client starting")
 	//client.StartClient()
+	rand.Seed(time.Now().Unix())
 
 	ebiten.Run(core.Update, 800, 600, 1, "Tetris")
 }
