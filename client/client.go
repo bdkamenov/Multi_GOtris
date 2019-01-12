@@ -1,9 +1,9 @@
 package client
 
 import (
+	"bufio"
 	"encoding/gob"
 	"fmt"
-	"github.com/bdkamenov/tetris_multiplayer/core"
 	"net"
 	"os"
 )
@@ -21,13 +21,15 @@ func StartClient() {
 
 	for n := 0; n < 10; n++ {
 		fmt.Println("client send data")
-		newEntity := core.Point{X: float32(n+1), Y: float32(n+2)}
+		reader := bufio.NewReader(os.Stdin)
+		text, _ := reader.ReadString('\n')
+		newEntity := text
 		err := encoder.Encode(newEntity)
 		checkError(err)
-		var entity core.Point
+		var entity string
 		err = decoder.Decode(&entity)
 		checkError(err)
-		fmt.Println("client receive data: ", entity.X, " ", entity.Y)
+		fmt.Println("client receive data: ",entity)
 	}
 
 	os.Exit(0)

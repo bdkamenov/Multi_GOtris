@@ -17,7 +17,9 @@ func main() {
 	//
 	//fmt.Println("Client starting")
 	//client.StartClient()
-	rand.Seed(time.Now().Unix())
 
+	rand.Seed(time.Now().Unix())
+	core.SetupScene()
 	ebiten.Run(core.Update, 800, 600, 1, "Tetris")
+
 }
