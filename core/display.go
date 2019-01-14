@@ -80,12 +80,14 @@ func DrawShape(shape Shape, screen *eb.Image, trX, trY, scX, scY float64) {
 
 func DrawText(score, lines int, screen *eb.Image) {
 
-	scoreText := fmt.Sprintf("SCORE: %d", score)
-	linesText := fmt.Sprintf("LINES: %d", lines)
+	scoreText := fmt.Sprintf("Score: %d", score)
+	linesText := fmt.Sprintf("Lines: %d", lines)
+	levelText := fmt.Sprintf("Level: %d", level)
 	text.Draw(screen, scoreText, linesScoreFont, 295, 78, color.White)
 	text.Draw(screen, linesText, linesScoreFont, 70, 100, color.White)
 	text.Draw(screen, "Next Piece", holdNextFont, 605, 74, color.White)
 	text.Draw(screen, "Holded", holdNextFont, 605, 277, color.White)
+	text.Draw(screen, levelText, linesScoreFont, 595, 425, color.White)
 
 }
 
@@ -199,9 +201,9 @@ func Update(screen *eb.Image) error {
 
 	rotate = false
 	if levelUpRate < score && delay > 0.2 {
-		delay -= 0.4
+		delay -= 0.1
 		delayBuffer = delay
-		levelUpRate += score / 3
+		levelUpRate += score
 		level++
 	}
 	delay = delayBuffer
