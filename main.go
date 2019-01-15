@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/bdkamenov/tetris_multiplayer/core"
+	"github.com/bdkamenov/Multi_GOtris/core"
 	"github.com/hajimehoshi/ebiten"
 	"math/rand"
 	"time"
