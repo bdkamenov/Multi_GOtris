@@ -1,5 +1,11 @@
 package core
 
+type Player struct {
+	Name string
+	Score int
+	GameOver bool
+}
+
 type Color = int // represents the color of the piece
 
 const (
@@ -20,16 +26,18 @@ type Board [BoardRows][BoardCols]Color
 
 var board Board
 
-var score int
 var clearedRows int
 var level int
 var levelUpRate int
+
+var Player1 Player
+var Player2 Player
 
 func (board *Board) addShape(shape Shape) {
 	for i := 0; i < ShapePieces; i++ {
 		board[shape.points[i].Y][shape.points[i].X] = shape.color
 	}
-	score += 10
+	Player1.Score += 10
 }
 
 func (board *Board) clearLines() {
@@ -53,11 +61,11 @@ func (board *Board) clearLines() {
 	}
 
 	if clearedAtOnes == 1 {
-		score += 100
+		Player1.Score += 100
 	} else if clearedAtOnes < 4 {
-		score += 150 * clearedAtOnes // combo cleared lines bonus
+		Player1.Score += 150 * clearedAtOnes // combo cleared lines bonus
 	} else if clearedAtOnes == 4 {
-		score += 200 * clearedAtOnes // combo cleared lines bonus
+		Player1.Score += 200 * clearedAtOnes // combo cleared lines bonus
 	}
 	clearedRows+=clearedAtOnes
 }

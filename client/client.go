@@ -4,13 +4,13 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/bdkamenov/Multi_GOtris/core"
+	"math/rand"
 	"net"
 	"os"
 	"time"
 )
 
 func StartClient(serverIP, playerName string) {
-
 
 	conn, err := net.Dial("tcp", serverIP+":1234")
 	checkError(err)
@@ -20,35 +20,40 @@ func StartClient(serverIP, playerName string) {
 	encoder := gob.NewEncoder(conn)
 	decoder := gob.NewDecoder(conn)
 
-	time.Sleep(3*time.Second)
+	time.Sleep(3 * time.Second)
 
-	var seed int
+	var seed int64
 	err = decoder.Decode(&seed)
 	checkError(err)
 	fmt.Println("client receive seed: ", seed)
+	rand.Seed(seed)
 
-	player := core.Player{playerName, 0, false}
+	core.Player1 = core.Player{playerName, 0, false}
 
-	for  {
+	fmt.Println("client send Player", core.Player1.Name, core.Player1.Score)
+	encoder.Encode(core.Player1)
 
-		fmt.Println("client send Player", player.Name, player.Score)
-		encoder.Encode(player)
-
-
-
-		var otherPlayer core.Player
-		err := decoder.Decode(&otherPlayer)
-		checkError(err)
-		fmt.Println("client recieve Player", otherPlayer.Name, otherPlayer.Score)
-
-		//updateGame
-		player.Score++
+	err = decoder.Decode(&core.Player2)
+	checkError(err)
+	fmt.Println("client recieve Player", core.Player2.Name, core.Player2.Score)
 
 
-		//rand.Seed(time.Now().Unix())
-		//core.SetupScene()
-		//ebiten.Run(core.Update, 800, 600, 1, "Tetris")
-	}
+	go func() {
+
+		for {
+
+			fmt.Println("client send Player", core.Player1.Name, core.Player1.Score)
+			encoder.Encode(core.Player1)
+
+			err := decoder.Decode(&core.Player2)
+			checkError(err)
+			fmt.Println("client recieve Player", core.Player2.Name, core.Player2.Score)
+
+			//updateGame
+			//time.Sleep(1 * time.Second)
+		}
+	}()
+	core.StartGame()
 
 	os.Exit(0)
 }

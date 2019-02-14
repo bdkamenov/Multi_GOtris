@@ -17,9 +17,6 @@ import (
 	"time"
 )
 
-var screenWidth = 800
-var screenHeight = 600
-
 var delayBuffer = 0.8
 
 var last time.Time
@@ -30,12 +27,23 @@ var textures [8]*eb.Image
 var linesScoreFont font.Face
 var holdNextFont font.Face
 
+var leftRightDelay float64
+var moveCounter int
+var rotateHoldDelay bool
+
 func loadTextures() {
 	for i := 0; i < 7; i++ {
 
 		textures[i], _, _ = ebutil.NewImageFromFile("assets/image/"+colors[i]+".png", eb.FilterDefault)
 	}
 	textures[7], _, _ = ebutil.NewImageFromFile("assets/image/tetris_backgraund.png", eb.FilterDefault)
+}
+
+func StartGame() {
+
+	SetupScene()
+	eb.Run(Update, 800, 600, 1, "Tetris")
+
 }
 
 func SetupScene() {
@@ -89,7 +97,11 @@ func DrawText(score, lines int, screen *eb.Image) {
 	text.Draw(screen, "Holded", holdNextFont, 605, 277, color.White)
 	text.Draw(screen, levelText, linesScoreFont, 595, 425, color.White)
 
+
 	text.Draw(screen, "Players:", linesScoreFont, 70, 200, color.White)
+	playerText := fmt.Sprintf("%d", Player2.Score)
+
+	text.Draw(screen, Player2.Name + ": " + playerText, linesScoreFont, 70, 260, color.White)
 
 }
 
@@ -136,10 +148,6 @@ func GetInput() (rotate bool, direction int) {
 	return
 }
 
-var leftRightDelay float64
-var moveCounter int
-var rotateHoldDelay bool
-
 func Update(screen *eb.Image) error {
 
 	// Perform time processing events
@@ -181,7 +189,7 @@ func Update(screen *eb.Image) error {
 		}
 	}
 
-	println(level, " ", delay, " ", levelUpRate)
+	//println(level, " ", delay, " ", levelUpRate)
 
 	/// Tick ///
 	if timer > delay {
@@ -196,16 +204,17 @@ func Update(screen *eb.Image) error {
 		}
 
 		timer = 0
+		println("receiving player2 info", Player2.Name, Player2.Score)
 	}
 
 	/// clear lines ///
 	board.clearLines()
 
 	rotate = false
-	if levelUpRate < score && delay > 0.2 {
+	if levelUpRate < Player1.Score && delay > 0.2 {
 		delay -= 0.1
 		delayBuffer = delay
-		levelUpRate += score
+		levelUpRate += Player1.Score
 		level++
 	}
 	delay = delayBuffer
@@ -217,7 +226,7 @@ func Update(screen *eb.Image) error {
 	DrawBoard(board, screen)
 	DrawShape(ActiveShape, screen, 299, 95, 1, 1)
 	DrawShape(NextShape, screen, 612, 90, 1.05, 1.05)
-	DrawText(score, clearedRows, screen)
+	DrawText(Player1.Score, clearedRows, screen)
 	if HoldedShape.color != Empty {
 		DrawShape(HoldedShape, screen, 780, 350, 0.8, 0.8)
 	}

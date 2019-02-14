@@ -4,11 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/bdkamenov/Multi_GOtris/client"
-	"github.com/bdkamenov/Multi_GOtris/core"
 	"github.com/bdkamenov/Multi_GOtris/server"
-	"github.com/hajimehoshi/ebiten"
-	"math/rand"
-	"time"
 )
 
 func main() {
@@ -21,12 +17,11 @@ func main() {
 
 	flag.Parse()
 
-	if *singlePlay {
-
-		rand.Seed(time.Now().Unix())
-		core.SetupScene()
-		ebiten.Run(core.Update, 800, 600, 1, "Tetris")
-	}
+	//if *singlePlay {
+	//
+	//	rand.Seed(time.Now().Unix())
+	//
+	//}
 
 	if *startServer {
 		fmt.Println("Server starting")
