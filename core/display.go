@@ -89,6 +89,8 @@ func DrawText(score, lines int, screen *eb.Image) {
 	text.Draw(screen, "Holded", holdNextFont, 605, 277, color.White)
 	text.Draw(screen, levelText, linesScoreFont, 595, 425, color.White)
 
+	text.Draw(screen, "Players:", linesScoreFont, 70, 200, color.White)
+
 }
 
 func DrawBoard(board Board, screen *eb.Image) {
