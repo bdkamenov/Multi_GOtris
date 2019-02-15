@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func StartServer(playerName string) {
+func StartServer(playerName, mode string) {
 	service := "127.0.0.1:1234"
 	tcpAddr, err := net.ResolveTCPAddr("tcp", service)
 	checkError(err)
@@ -37,7 +37,6 @@ func StartServer(playerName string) {
 		err = encoder.Encode(seed)
 		checkError(err)
 
-		println("Seed sended: ", seed)
 		core.Player1 = core.Player{playerName, 0, false}
 
 		err = decoder.Decode(&core.Player2)
@@ -45,24 +44,24 @@ func StartServer(playerName string) {
 
 		go func() {
 			for {
-
-				fmt.Println("server send data", core.Player1.Name, core.Player1.Score)
 				encoder.Encode(core.Player1)
 
 				err = decoder.Decode(&core.Player2)
 				checkError(err)
-				fmt.Println("server recieved other Player data: ", core.Player2.Name, core.Player2.Score)
 
-				/// update game
-				time.Sleep(3 * time.Second)
+				if core.Player2.GameOver == true {
+					println(core.Player2.Name, "lost, you win!")
+					break
+				}
+
 			}
 
 			conn.Close()
+			os.Exit(0)
 		}()
 
-
 		// start game here
-		core.StartGame()
+		core.StartGame(mode)
 	}
 }
 

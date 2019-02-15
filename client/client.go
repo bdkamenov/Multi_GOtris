@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func StartClient(serverIP, playerName string) {
+func StartClient(serverIP, playerName, mode string) {
 
 	conn, err := net.Dial("tcp", serverIP+":1234")
 	checkError(err)
@@ -25,37 +25,35 @@ func StartClient(serverIP, playerName string) {
 	var seed int64
 	err = decoder.Decode(&seed)
 	checkError(err)
-	fmt.Println("client receive seed: ", seed)
 	rand.Seed(seed)
 
 	core.Player1 = core.Player{playerName, 0, false}
 
-	fmt.Println("client send Player", core.Player1.Name, core.Player1.Score)
 	encoder.Encode(core.Player1)
 
 	err = decoder.Decode(&core.Player2)
 	checkError(err)
-	fmt.Println("client recieve Player", core.Player2.Name, core.Player2.Score)
-
 
 	go func() {
 
 		for {
-
-			fmt.Println("client send Player", core.Player1.Name, core.Player1.Score)
 			encoder.Encode(core.Player1)
 
 			err := decoder.Decode(&core.Player2)
 			checkError(err)
-			fmt.Println("client recieve Player", core.Player2.Name, core.Player2.Score)
 
-			//updateGame
-			//time.Sleep(1 * time.Second)
+			if core.Player2.GameOver == true {
+				println(core.Player2.Name, "lost, you win!")
+				break
+			}
+
+			//time.Sleep(100 * time.Millisecond)
 		}
-	}()
-	core.StartGame()
 
-	os.Exit(0)
+		os.Exit(0)
+	}()
+
+	core.StartGame(mode)
 }
 
 func checkError(err error) {

@@ -7,6 +7,7 @@ import (
 const ShapePieces = 4
 
 type Piece = int
+
 const (
 	IShape Piece = iota + 1
 	JShape
@@ -22,7 +23,7 @@ const (
 const (
 	Left int = iota - 1
 	Center
-	Right // also used for down
+	Right  // also used for down
 )
 
 type Point struct {
@@ -33,7 +34,7 @@ type Point struct {
 // making a contiguous 'piece'.
 type Shape struct {
 	points [ShapePieces]Point
-	color Color
+	color  Color
 }
 
 var ActiveShape Shape
@@ -61,6 +62,7 @@ func holdShape() {
 		ActiveShape.resetShape()
 		HoldedShape.copyFrom(&ActiveShape)
 		ActiveShape.copyFrom(&NextShape)
+		ActiveShape.moveShape(4, Center)
 		NextShape = generateNewShape()
 	} else {
 		var temp Shape
@@ -68,6 +70,7 @@ func holdShape() {
 		temp.copyFrom(&ActiveShape)
 		ActiveShape.copyFrom(&HoldedShape)
 		HoldedShape.copyFrom(&temp)
+		ActiveShape.moveShape(4, Center)
 	}
 }
 
@@ -79,11 +82,33 @@ func (shape *Shape) rotate() {
 
 	centerOfRot := shape.points[1] // center of rotation
 
+	var buff Shape
+	buff.copyFrom(shape)
+
 	for i := 0; i < ShapePieces; i++ {
-		x := shape.points[i].Y - centerOfRot.Y
-		y := shape.points[i].X - centerOfRot.X
-		shape.points[i].X = centerOfRot.X - x
-		shape.points[i].Y = centerOfRot.Y + y
+		x := buff.points[i].Y - centerOfRot.Y
+		y := buff.points[i].X - centerOfRot.X
+		buff.points[i].X = centerOfRot.X - x
+		buff.points[i].Y = centerOfRot.Y + y
+	}
+
+	if !buff.isInside(gameBoard) {
+		buff.moveShape(1, 0)
+
+		if buff.isInside(gameBoard) {
+			shape.copyFrom(&buff)
+			return
+		}
+
+		buff.copyFrom(shape)
+		buff.moveShape(-1, 0)
+
+		if buff.isInside(gameBoard) {
+			shape.copyFrom(&buff)
+			return
+		}
+	} else {
+		shape.copyFrom(&buff)
 	}
 }
 

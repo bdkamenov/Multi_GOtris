@@ -1,10 +1,18 @@
 package core
 
+import (
+	"time"
+)
+
+const timeAttack = "time-attack"
+
 type Player struct {
-	Name string
-	Score int
+	Name     string
+	Score    int
 	GameOver bool
 }
+
+var start time.Time
 
 type Color = int // represents the color of the piece
 
@@ -24,7 +32,7 @@ const BoardCols = 10
 
 type Board [BoardRows][BoardCols]Color
 
-var board Board
+var gameBoard Board
 
 var clearedRows int
 var level int
@@ -35,7 +43,10 @@ var Player2 Player
 
 func (board *Board) addShape(shape Shape) {
 	for i := 0; i < ShapePieces; i++ {
-		board[shape.points[i].Y][shape.points[i].X] = shape.color
+		if shape.points[i].X < BoardCols && shape.points[i].Y < BoardRows {
+
+			board[shape.points[i].Y][shape.points[i].X] = shape.color
+		}
 	}
 	Player1.Score += 10
 }
@@ -67,5 +78,21 @@ func (board *Board) clearLines() {
 	} else if clearedAtOnes == 4 {
 		Player1.Score += 200 * clearedAtOnes // combo cleared lines bonus
 	}
-	clearedRows+=clearedAtOnes
+	clearedRows += clearedAtOnes
+}
+
+func (board Board) isGameOver() bool {
+
+	var zero time.Time
+
+	if start != zero && time.Now().Sub(start) > time.Minute {
+		return true
+	}
+
+	for i := 0; i < BoardCols; i++ {
+		if board[1][i] != 0 {
+			return true
+		}
+	}
+	return false
 }

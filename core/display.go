@@ -3,12 +3,11 @@ package core
 import (
 	"fmt"
 	"github.com/golang/freetype/truetype"
+	eb "github.com/hajimehoshi/ebiten"
+	ebutil "github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/text"
 	"golang.org/x/image/font"
 	"image/color"
-
-	eb "github.com/hajimehoshi/ebiten"
-	ebutil "github.com/hajimehoshi/ebiten/ebitenutil"
 	_ "image/png"
 
 	"io/ioutil"
@@ -17,10 +16,10 @@ import (
 	"time"
 )
 
-var delayBuffer = 0.8
+var delayBuffer float64
 
 var last time.Time
-var timer = 0.0
+var timer float64
 var delay = delayBuffer
 
 var textures [8]*eb.Image
@@ -39,14 +38,25 @@ func loadTextures() {
 	textures[7], _, _ = ebutil.NewImageFromFile("assets/image/tetris_backgraund.png", eb.FilterDefault)
 }
 
-func StartGame() {
+func StartGame(mode string) {
 
-	SetupScene()
-	eb.Run(Update, 800, 600, 1, "Tetris")
+	SetupScene(mode)
+	err := eb.Run(Update, 800, 600, 1, "Tetris")
+
+	if err != nil {
+		println("Fatal error: ", err)
+	}
 
 }
 
-func SetupScene() {
+func SetupScene(mode string) {
+
+	delayBuffer = 0.8
+	timer = 0.0
+
+	if mode == timeAttack {
+		start = time.Now()
+	}
 
 	loadTextures()
 
@@ -67,6 +77,7 @@ func SetupScene() {
 
 	last = time.Now()
 	ActiveShape = generateNewShape()
+	ActiveShape.moveShape(4, Center)
 	NextShape = generateNewShape()
 	levelUpRate = 300
 	level = 0
@@ -97,11 +108,10 @@ func DrawText(score, lines int, screen *eb.Image) {
 	text.Draw(screen, "Holded", holdNextFont, 605, 277, color.White)
 	text.Draw(screen, levelText, linesScoreFont, 595, 425, color.White)
 
-
 	text.Draw(screen, "Players:", linesScoreFont, 70, 200, color.White)
 	playerText := fmt.Sprintf("%d", Player2.Score)
 
-	text.Draw(screen, Player2.Name + ": " + playerText, linesScoreFont, 70, 260, color.White)
+	text.Draw(screen, Player2.Name+": "+playerText, linesScoreFont, 70, 260, color.White)
 
 }
 
@@ -176,7 +186,7 @@ func Update(screen *eb.Image) error {
 	/// <- Move -> ///
 	ActiveShape.moveLeftRight(direction, &Buffer)
 
-	if !ActiveShape.isInside(board) { // if the the position is not in the board go back
+	if !ActiveShape.isInside(gameBoard) { // if the the position is not in the gameBoard go back
 		ActiveShape.copyFrom(&Buffer)
 	}
 
@@ -184,33 +194,39 @@ func Update(screen *eb.Image) error {
 	if rotate {
 		ActiveShape.rotate()
 
-		if !ActiveShape.isInside(board) { // if there is no where to go we dont moveLeftRight the figure again
+		if !ActiveShape.isInside(gameBoard) { // if there is no where to go we dont moveLeftRight the figure again
 			ActiveShape.copyFrom(&Buffer)
 		}
 	}
-
-	//println(level, " ", delay, " ", levelUpRate)
 
 	/// Tick ///
 	if timer > delay {
 		Buffer.copyFrom(&ActiveShape) // save the positions before inBoardCheck
 		ActiveShape.applyGravity()
 
-		if !ActiveShape.isInside(board) {
-			board.addShape(Buffer)
+		if !ActiveShape.isInside(gameBoard) {
+			gameBoard.addShape(Buffer)
+
+			if gameBoard.isGameOver() {
+				Player1.GameOver = true
+				println("game over")
+				return nil
+			}
 
 			ActiveShape = NextShape
+			ActiveShape.moveShape(4, Center)
 			NextShape = generateNewShape()
 		}
 
 		timer = 0
-		println("receiving player2 info", Player2.Name, Player2.Score)
 	}
 
 	/// clear lines ///
-	board.clearLines()
+	gameBoard.clearLines()
 
 	rotate = false
+
+	/// level up if needed ///
 	if levelUpRate < Player1.Score && delay > 0.2 {
 		delay -= 0.1
 		delayBuffer = delay
@@ -223,7 +239,7 @@ func Update(screen *eb.Image) error {
 
 	screen.Clear()
 	screen.DrawImage(textures[7], &eb.DrawImageOptions{})
-	DrawBoard(board, screen)
+	DrawBoard(gameBoard, screen)
 	DrawShape(ActiveShape, screen, 299, 95, 1, 1)
 	DrawShape(NextShape, screen, 612, 90, 1.05, 1.05)
 	DrawText(Player1.Score, clearedRows, screen)
