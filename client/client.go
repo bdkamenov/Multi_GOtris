@@ -10,6 +10,9 @@ import (
 	"time"
 )
 
+// StartClient starts the game for the second player and
+// the client side for the server-client service
+
 func StartClient(serverIP, playerName, mode string) {
 
 	conn, err := net.Dial("tcp", serverIP+":1234")

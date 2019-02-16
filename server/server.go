@@ -10,8 +10,11 @@ import (
 	"time"
 )
 
-func StartServer(playerName, mode string) {
-	service := "127.0.0.1:1234"
+// StartServer starts the first player and the server side of
+// the server-client service
+
+func StartServer(serverIP, playerName, mode string) {
+	service := serverIP+":1234"
 	tcpAddr, err := net.ResolveTCPAddr("tcp", service)
 	checkError(err)
 

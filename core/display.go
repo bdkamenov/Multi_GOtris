@@ -20,7 +20,7 @@ var delayBuffer float64
 
 var last time.Time
 var timer float64
-var delay = delayBuffer
+var delay float64
 
 var textures [8]*eb.Image
 var linesScoreFont font.Face
@@ -30,6 +30,7 @@ var leftRightDelay float64
 var moveCounter int
 var rotateHoldDelay bool
 
+// loadTextures loads the pictures used for Pieces and Background
 func loadTextures() {
 	for i := 0; i < 7; i++ {
 
@@ -38,10 +39,11 @@ func loadTextures() {
 	textures[7], _, _ = ebutil.NewImageFromFile("assets/image/tetris_backgraund.png", eb.FilterDefault)
 }
 
+// StartGame setups the scene and stars the game
 func StartGame(mode string) {
 
-	SetupScene(mode)
-	err := eb.Run(Update, 800, 600, 1, "Tetris")
+	setupScene(mode)
+	err := eb.Run(update, 800, 600, 1, "Tetris")
 
 	if err != nil {
 		println("Fatal error: ", err)
@@ -49,8 +51,10 @@ func StartGame(mode string) {
 
 }
 
-func SetupScene(mode string) {
+// setupScene setup the scene
+func setupScene(mode string) {
 
+	delay = delayBuffer
 	delayBuffer = 0.8
 	timer = 0.0
 
@@ -83,21 +87,21 @@ func SetupScene(mode string) {
 	level = 0
 }
 
-func DrawPiece(piece Point, screen *eb.Image, color int, trX, trY, scX, scY float64) {
+func drawPiece(piece Point, screen *eb.Image, color int, trX, trY, scX, scY float64) {
 	geo1 := eb.GeoM{}
 	geo1.Translate(float64(piece.X*25)+trX, float64(piece.Y*25)+trY)
 	geo1.Scale(scX, scY)
 	screen.DrawImage(textures[color], &eb.DrawImageOptions{GeoM: geo1})
 }
 
-func DrawShape(shape Shape, screen *eb.Image, trX, trY, scX, scY float64) {
+func drawShape(shape Shape, screen *eb.Image, trX, trY, scX, scY float64) {
 
 	for i := 0; i < ShapePieces; i++ {
-		DrawPiece(shape.points[i], screen, shape.color-1, trX, trY, scX, scY)
+		drawPiece(shape.points[i], screen, shape.color-1, trX, trY, scX, scY)
 	}
 }
 
-func DrawText(score, lines int, screen *eb.Image) {
+func drawText(score, lines int, screen *eb.Image) {
 
 	scoreText := fmt.Sprintf("Score: %d", score)
 	linesText := fmt.Sprintf("Lines: %d", lines)
@@ -111,23 +115,28 @@ func DrawText(score, lines int, screen *eb.Image) {
 	text.Draw(screen, "Players:", linesScoreFont, 70, 200, color.White)
 	playerText := fmt.Sprintf("%d", Player2.Score)
 
-	text.Draw(screen, Player2.Name+": "+playerText, linesScoreFont, 70, 260, color.White)
+	if Player2.Name != "" {
+		text.Draw(screen, Player2.Name+": "+playerText, linesScoreFont, 70, 260, color.White)
+	}
 
 }
 
-func DrawBoard(board Board, screen *eb.Image) {
+
+// drawBoard draws the board on the screen
+func drawBoard(board Board, screen *eb.Image) {
 
 	for i := 0; i < BoardRows; i++ {
 		for j := 0; j < BoardCols; j++ {
 			if board[i][j] == 0 {
 				continue
 			}
-			DrawPiece(Point{j, i}, screen, board[i][j]-1, 299, 95, 1, 1)
+			drawPiece(Point{j, i}, screen, board[i][j]-1, 299, 95, 1, 1)
 		}
 	}
 }
 
-func GetInput() (rotate bool, direction int) {
+// getInput takes the input from keyboard
+func getInput() (rotate bool, direction int) {
 	if eb.IsKeyPressed(eb.KeyUp) && rotateHoldDelay == false {
 		rotateHoldDelay = true
 		rotate = true
@@ -158,7 +167,8 @@ func GetInput() (rotate bool, direction int) {
 	return
 }
 
-func Update(screen *eb.Image) error {
+// update updates the frames
+func update(screen *eb.Image) error {
 
 	// Perform time processing events
 	dt := time.Since(last).Seconds()
@@ -172,7 +182,7 @@ func Update(screen *eb.Image) error {
 		leftRightDelay = math.Max(leftRightDelay-dt, 0.0)
 	}
 
-	rotate, direction = GetInput()
+	rotate, direction = getInput()
 
 	if !eb.IsKeyPressed(eb.KeySpace) && !eb.IsKeyPressed(eb.KeyUp) {
 		rotateHoldDelay = false
@@ -239,12 +249,12 @@ func Update(screen *eb.Image) error {
 
 	screen.Clear()
 	screen.DrawImage(textures[7], &eb.DrawImageOptions{})
-	DrawBoard(gameBoard, screen)
-	DrawShape(ActiveShape, screen, 299, 95, 1, 1)
-	DrawShape(NextShape, screen, 612, 90, 1.05, 1.05)
-	DrawText(Player1.Score, clearedRows, screen)
+	drawBoard(gameBoard, screen)
+	drawShape(ActiveShape, screen, 299, 95, 1, 1)
+	drawShape(NextShape, screen, 612, 90, 1.05, 1.05)
+	drawText(Player1.Score, clearedRows, screen)
 	if HoldedShape.color != Empty {
-		DrawShape(HoldedShape, screen, 780, 350, 0.8, 0.8)
+		drawShape(HoldedShape, screen, 780, 350, 0.8, 0.8)
 	}
 
 	return nil

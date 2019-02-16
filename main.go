@@ -20,7 +20,7 @@ func main() {
 	flag.Parse()
 
 	if *gameMode == "" {
-		println("Game mode not added!")
+		println("Please choose game mode!")
 		return
 	}
 
@@ -31,7 +31,7 @@ func main() {
 
 	if *startServer {
 		fmt.Println("Server starting")
-		server.StartServer(*playerName, *gameMode)
+		server.StartServer(*serverIP, *playerName, *gameMode)
 	} else if *gameMode != "single" {
 		fmt.Println("Client starting")
 		client.StartClient(*serverIP, *playerName, *gameMode)

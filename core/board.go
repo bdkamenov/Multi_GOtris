@@ -6,6 +6,8 @@ import (
 
 const timeAttack = "time-attack"
 
+
+// Player describes the player nickname, score if its
 type Player struct {
 	Name     string
 	Score    int
@@ -41,16 +43,18 @@ var levelUpRate int
 var Player1 Player
 var Player2 Player
 
+// addShape inserts shape in the board
 func (board *Board) addShape(shape Shape) {
+
 	for i := 0; i < ShapePieces; i++ {
 		if shape.points[i].X < BoardCols && shape.points[i].Y < BoardRows {
-
 			board[shape.points[i].Y][shape.points[i].X] = shape.color
 		}
 	}
 	Player1.Score += 10
 }
 
+// clearLines checks if there are fitted lines and removes them
 func (board *Board) clearLines() {
 	clearedAtOnes := 0
 	k := BoardRows - 1
@@ -60,7 +64,6 @@ func (board *Board) clearLines() {
 			if board[i][j] != 0 {
 				cnt++
 			}
-
 			board[k][j] = board[i][j]
 		}
 
@@ -81,6 +84,8 @@ func (board *Board) clearLines() {
 	clearedRows += clearedAtOnes
 }
 
+// isGameOver checks if there is a Piece in the last line of the board
+// and ends the game if there is
 func (board Board) isGameOver() bool {
 
 	var zero time.Time
