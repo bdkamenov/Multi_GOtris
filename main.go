@@ -19,6 +19,11 @@ func main() {
 
 	flag.Parse()
 
+	if *gameMode == "" {
+		println("Game mode not added!")
+		return
+	}
+
 	if *gameMode == "single" {
 		rand.Seed(time.Now().Unix())
 		core.StartGame(*gameMode)
