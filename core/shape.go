@@ -100,8 +100,7 @@ func (shape *Shape) rotate() {
 			return
 		}
 
-		buff.copyFrom(shape)
-		buff.moveShape(-1, 0)
+		buff.moveShape(-2, 0)
 
 		if buff.isInside(gameBoard) {
 			shape.copyFrom(&buff)
