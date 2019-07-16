@@ -13,7 +13,7 @@ import (
 // StartClient starts the game for the second player and
 // the client side for the server-client service
 
-func StartClient(serverIP, playerName, mode string) {
+func StartClient(serverIP, playerName, mode string, numOfPlayers int) {
 
 	conn, err := net.Dial("tcp", serverIP+":1234")
 	checkError(err)
@@ -30,24 +30,30 @@ func StartClient(serverIP, playerName, mode string) {
 	checkError(err)
 	rand.Seed(seed)
 
-	core.Player1 = core.Player{playerName, 0, false}
+	core.Player1 = core.Player{Name:playerName}
 
-	encoder.Encode(core.Player1)
-
-	err = decoder.Decode(&core.Player2)
+	err = encoder.Encode(core.Player1)
 	checkError(err)
+
+	core.OtherPlayers = make([]core.Player, 0, numOfPlayers - 1)
+
+	for _, v := range core.OtherPlayers {
+		err = decoder.Decode(&v)
+		checkError(err)
+	}
 
 	go func() {
 
 		for {
 			encoder.Encode(core.Player1)
 
-			err := decoder.Decode(&core.Player2)
-			checkError(err)
-
-			if core.Player2.GameOver == true {
-				println(core.Player2.Name, "lost, you win!")
-				break
+			for _, v := range core.OtherPlayers {
+				err = decoder.Decode(&v)
+				checkError(err)
+				if v.GameOver == true {
+					println(v.Name, "lost, you win!")
+					break
+				}
 			}
 
 			//time.Sleep(100 * time.Millisecond)

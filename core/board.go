@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/gob"
 	"time"
 )
 
@@ -12,6 +13,8 @@ type Player struct {
 	Name     string
 	Score    int
 	GameOver bool
+	Encoder gob.Encoder
+	Decoder gob.Decoder
 }
 
 var start time.Time
@@ -41,7 +44,7 @@ var level int
 var levelUpRate int
 
 var Player1 Player
-var Player2 Player
+var OtherPlayers []Player
 
 // addShape inserts shape in the board
 func (board *Board) addShape(shape Shape) {

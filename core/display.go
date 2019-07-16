@@ -113,10 +113,14 @@ func drawText(score, lines int, screen *eb.Image) {
 	text.Draw(screen, levelText, linesScoreFont, 595, 425, color.White)
 
 	text.Draw(screen, "Players:", linesScoreFont, 70, 200, color.White)
-	playerText := fmt.Sprintf("%d", Player2.Score)
 
-	if Player2.Name != "" {
-		text.Draw(screen, Player2.Name+": "+playerText, linesScoreFont, 70, 260, color.White)
+	for i, v := range OtherPlayers {
+
+		playerText := fmt.Sprintf("%d", v.Score)
+
+		if v.Name != "" {
+			text.Draw(screen, v.Name+": "+playerText, linesScoreFont, 70, 260 + i*10, color.White)
+		}
 	}
 
 }

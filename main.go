@@ -16,6 +16,7 @@ func main() {
 	serverIP := flag.String("connect", "127.0.0.1", "start client connecting to ip")
 	playerName := flag.String("name", "player", "enter player name")
 	gameMode := flag.String("mode", "", "game mode: time-attack, classic, single")
+	numOfPlayers := flag.Int("numofplayers", 1, "number of the players playing together")
 
 	flag.Parse()
 
@@ -31,10 +32,10 @@ func main() {
 
 	if *startServer {
 		fmt.Println("Server starting")
-		server.StartServer(*serverIP, *playerName, *gameMode)
+		server.StartServer(*serverIP, *numOfPlayers)
 	} else if *gameMode != "single" {
 		fmt.Println("Client starting")
-		client.StartClient(*serverIP, *playerName, *gameMode)
+		client.StartClient(*serverIP, *playerName, *gameMode, *numOfPlayers)
 	}
 
 }
