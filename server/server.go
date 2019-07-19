@@ -3,20 +3,65 @@ package server
 import (
 	"encoding/gob"
 	"fmt"
-	"github.com/bdkamenov/Multi_GOtris/core"
-	"math/rand"
 	"net"
 	"os"
+	"sync"
 	"time"
 )
 
-type player struct {
-	Id      int
-	Encoder gob.Encoder
-	Decoder gob.Decoder
+type Player struct {
+	Name     string
+	Score    int
+	GameOver bool
 }
 
-var players []player
+var players map[string]Player
+var seed int64
+var allReady bool
+var mutex sync.Mutex
+var wg sync.WaitGroup
+
+func handlePlayer(conn net.Conn) {
+	defer wg.Done()
+	defer conn.Close()
+
+	fmt.Println("server connection made")
+
+	fmt.Println("Wait for all players to join!")
+	for !allReady {
+	}
+
+	encoder := gob.NewEncoder(conn)
+	decoder := gob.NewDecoder(conn)
+
+	err := encoder.Encode(seed)
+	checkError(err)
+	time.Sleep(3 * time.Second)
+
+	player := Player{"", 0, false}
+
+	err = decoder.Decode(&player)
+	checkError(err)
+
+	mutex.Lock()
+	fmt.Println("decoded: ", player)
+	players[player.Name] = player
+	mutex.Unlock()
+
+	for {
+		mutex.Lock()
+		encoder.Encode(players)
+		mutex.Unlock()
+
+		mutex.Lock()
+		err = decoder.Decode(&players)
+		mutex.Unlock()
+		checkError(err)
+
+	}
+
+	os.Exit(0)
+}
 
 // StartServer starts the first player and the server side of
 // the server-client service
@@ -30,63 +75,24 @@ func StartServer(serverIP string, numOfPlayers int) {
 	listener, err := net.ListenTCP("tcp", tcpAddr)
 	checkError(err)
 
-	players = make([]player, 0, numOfPlayers)
+	players = make(map[string]Player)
+	allReady = false
+	seed = time.Now().Unix()
 
-	fmt.Println(players)
-
-	println(numOfPlayers)
 	for i := 0; i < numOfPlayers; i++ {
+		wg.Add(1)
+
 		conn, err := listener.Accept()
 		if err != nil {
 			continue
 		}
 
-		defer conn.Close()
+		go handlePlayer(conn)
 
-		fmt.Println("server connection made")
-		players = append(players, player{i, *gob.NewEncoder(conn), *gob.NewDecoder(conn)})
 	}
+	allReady = true
 
-	seed := time.Now().Unix()
-	rand.Seed(seed)
-
-	for i := 0; i < numOfPlayers; i++ {
-
-		err = players[i].Encoder.Encode(seed)
-		checkError(err)
-	}
-
-	playersInfo := make([]core.Player, numOfPlayers)
-
-	for i := 0; i < numOfPlayers; i++ {
-
-		err = players[i].Decoder.Decode(&playersInfo[i])
-		checkError(err)
-
-		for j := 0; j < numOfPlayers; j++ {
-			if j != i {
-				err = players[j].Encoder.Encode(playersInfo[i])
-				checkError(err)
-			}
-		}
-	}
-
-	go func() {
-		for i := 0; i < numOfPlayers; i++ {
-
-			err = players[i].Decoder.Decode(&playersInfo[i])
-			checkError(err)
-
-			for j := 0; j < numOfPlayers; j++ {
-				if j != i {
-					err = players[j].Encoder.Encode(playersInfo[i])
-					checkError(err)
-				}
-			}
-		}
-		return
-		//os.Exit(0)
-	}()
+	wg.Wait()
 }
 
 func checkError(err error) {

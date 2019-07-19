@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"math/rand"
+	"time"
+
 	"github.com/bdkamenov/Multi_GOtris/client"
 	"github.com/bdkamenov/Multi_GOtris/core"
 	"github.com/bdkamenov/Multi_GOtris/server"
-	"math/rand"
-	"time"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 
 	flag.Parse()
 
-	if *gameMode == "" {
+	if !(*startServer) && *gameMode == "" {
 		println("Please choose game mode!")
 		return
 	}

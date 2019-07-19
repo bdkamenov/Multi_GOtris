@@ -2,13 +2,15 @@ package core
 
 import (
 	"fmt"
+	"image/color"
+	_ "image/png"
+	"sync"
+
 	"github.com/golang/freetype/truetype"
 	eb "github.com/hajimehoshi/ebiten"
 	ebutil "github.com/hajimehoshi/ebiten/ebitenutil"
 	"github.com/hajimehoshi/ebiten/text"
 	"golang.org/x/image/font"
-	"image/color"
-	_ "image/png"
 
 	"io/ioutil"
 
@@ -29,6 +31,8 @@ var holdNextFont font.Face
 var leftRightDelay float64
 var moveCounter int
 var rotateHoldDelay bool
+
+var mutex sync.Mutex
 
 // loadTextures loads the pictures used for Pieces and Background
 func loadTextures() {
@@ -114,17 +118,19 @@ func drawText(score, lines int, screen *eb.Image) {
 
 	text.Draw(screen, "Players:", linesScoreFont, 70, 200, color.White)
 
-	for i, v := range OtherPlayers {
+	i := 0
+	mutex.Lock()
+	for _, v := range OtherPlayers {
 
 		playerText := fmt.Sprintf("%d", v.Score)
 
-		if v.Name != "" {
-			text.Draw(screen, v.Name+": "+playerText, linesScoreFont, 70, 260 + i*10, color.White)
+		if v.Name != Player1.Name {
+			text.Draw(screen, v.Name+": "+playerText, linesScoreFont, 70, 260+i*10, color.White)
+			i++
 		}
 	}
-
+	mutex.Unlock()
 }
-
 
 // drawBoard draws the board on the screen
 func drawBoard(board Board, screen *eb.Image) {
