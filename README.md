@@ -1,6 +1,6 @@
 # Multi GOtris
 A multiplyer golang tetris.<br>
-University project for programming with Go course.
+University project for learning programming with Go.
 
 ### To get the game
 * The only dependency the project has is cross platform [Ebiten](https://github.com/hajimehoshi/ebiten)
@@ -15,8 +15,8 @@ server and choose the game mode.
 
 ### Example run 
 
-* `go run main.go -server -mode=classic -name=the_killer` to run the server
-* `go run main.go -connect=127.0.0.1 -name=the_victim` to run the client
+* `go run main.go -server -mode=classic -name=killer -numofplayers=3` to run the server
+* `go run main.go -connect=127.0.0.1 -name=victim` to run the client
 * `go run main.go -help` to see all options with the default values
 
 ### Controls 
